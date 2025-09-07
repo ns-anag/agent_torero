@@ -1,64 +1,93 @@
-from crewai import Agent, Crew, Process, Task
-from crewai.project import CrewBase, agent, crew, task
-from crewai.agents.agent_builder.base_agent import BaseAgent
+"""
+AgentTorero crew definition.
+"""
+import os
 from typing import List
-# If you want to run a snippet of code before or after the crew starts,
-# you can use the @before_kickoff and @after_kickoff decorators
-# https://docs.crewai.com/concepts/crews#example-crew-class-with-decorators
+
+from crewai import Agent, Crew, Process, Task
+from crewai.agents.agent_builder.base_agent import BaseAgent
+from crewai.knowledge.source.text_file_knowledge_source import \
+    TextFileKnowledgeSource
+from crewai.project import CrewBase, agent, crew, task, tool
+
+from src.agent_torero.tools.jira_tool import JIRATool
+from src.agent_torero.config import get_config
+
 
 @CrewBase
-class AgentTorero():
+class AgentTorero:
     """AgentTorero crew"""
 
     agents: List[BaseAgent]
     tasks: List[Task]
 
-    # Learn more about YAML configuration files here:
-    # Agents: https://docs.crewai.com/concepts/agents#yaml-configuration-recommended
-    # Tasks: https://docs.crewai.com/concepts/tasks#yaml-configuration-recommended
-    
-    # If you would like to add tools to your agents, you can learn more about it here:
-    # https://docs.crewai.com/concepts/agents#agent-tools
+    rbi_provider_knowledge = TextFileKnowledgeSource(
+        file_paths=["rbi_provider_linux.txt"],
+    )
+
     @agent
-    def researcher(self) -> Agent:
+    def jira_specialist(self) -> Agent:
+        """Creates the JIRA Specialist agent"""
+        # pylint: disable=no-member
         return Agent(
-            config=self.agents_config['researcher'], # type: ignore[index]
-            verbose=True
+            config=self.agents_config["jira_specialist"],  # type: ignore[index]
+            verbose=True,
         )
 
     @agent
-    def reporting_analyst(self) -> Agent:
+    def reviewer_agent(self) -> Agent:
+        """Creates the Reviewer Agent"""
+        # pylint: disable=no-member
         return Agent(
-            config=self.agents_config['reporting_analyst'], # type: ignore[index]
-            verbose=True
-        )
-
-    # To learn more about structured task outputs,
-    # task dependencies, and task callbacks, check out the documentation:
-    # https://docs.crewai.com/concepts/tasks#overview-of-a-task
-    @task
-    def research_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['research_task'], # type: ignore[index]
+            config=self.agents_config["reviewer_agent"],  # type: ignore[index]
+            verbose=True,
+            reasoning=True,
+            max_reasoning_attempts=3,
+            knowledge_sources=[self.rbi_provider_knowledge],
         )
 
     @task
-    def reporting_task(self) -> Task:
+    def jira_tickets_info_task(self) -> Task:
+        """
+        Task to review GitHub PR code and extract Jira tickets.
+        """
+        # pylint: disable=no-member
         return Task(
-            config=self.tasks_config['reporting_task'], # type: ignore[index]
-            output_file='report.md'
+            config=self.tasks_config["jira_tickets_info_task"],  # type: ignore[index]
         )
+
+    @task
+    def review_jira_impact_task(self) -> Task:
+        """
+        Task to review Jira tickets and provide impact analysis.
+        """
+        # pylint: disable=no-member
+        return Task(
+            config=self.tasks_config["review_jira_impact_task"],  # type: ignore[index]
+            output_file="report.md",
+        )
+
+    @tool
+    def jira_ticket_info_tool(self) -> JIRATool:
+        """Creates the JIRA Ticket Info tool"""
+        return JIRATool()
 
     @crew
     def crew(self) -> Crew:
         """Creates the AgentTorero crew"""
-        # To learn how to add knowledge sources to your crew, check out the documentation:
-        # https://docs.crewai.com/concepts/knowledge#what-is-knowledge
 
         return Crew(
-            agents=self.agents, # Automatically created by the @agent decorator
-            tasks=self.tasks, # Automatically created by the @task decorator
+            agents=self.agents,
+            tasks=self.tasks,
             process=Process.sequential,
+            memory=True,
             verbose=True,
-            # process=Process.hierarchical, # In case you wanna use that instead https://docs.crewai.com/how-to/Hierarchical/
+            embedder={
+                "provider": "google",
+                "config": {
+                    "model": "models/embedding-001",
+                    "api_key": get_config("GEMINI_API_KEY"),
+                },
+            },
         )
+

@@ -5,7 +5,16 @@ description = "agent_torero using crewAI"
 authors = [{ name = "Your Name", email = "you@example.com" }]
 requires-python = ">=3.10,<3.14"
 dependencies = [
-    "crewai[tools]>=0.177.0,<1.0.0"
+    "atlassian-python-api>=4.0.7",
+    "black>=25.1.0",
+    "crewai[tools]",
+    "isort>=6.0.1",
+    "pylint>=3.3.8",
+    "python-dotenv>=1.1.1",
+    "docling==2.51.0",
+    "numpy<2.0.0",
+    "google-generativeai>=0.8.5",
+    "requests>=2.31.0",
 ]
 
 [project.scripts]
@@ -14,6 +23,7 @@ run_crew = "agent_torero.main:run"
 train = "agent_torero.main:train"
 replay = "agent_torero.main:replay"
 test = "agent_torero.main:test"
+setup_ollama = "setup_ollama_embeddings:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -21,3 +31,6 @@ build-backend = "hatchling.build"
 
 [tool.crewai]
 type = "crew"
+
+[tool.uv]
+required-environments = ["sys_platform == 'darwin' and platform_machine == 'x86_64'"]

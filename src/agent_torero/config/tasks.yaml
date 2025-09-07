@@ -1,17 +1,20 @@
-research_task:
+---
+jira_tickets_info_task:
   description: >
-    Conduct a thorough research about {topic}
-    Make sure you find any interesting and relevant information given
-    the current year is {current_year}.
+    Use the JIRA Ticket Fetcher tool to fetch and summarize details for the given Jira ticket IDs: {ticket_ids}.
+    For each ticket, include the summary, description, status, and recent comments.
   expected_output: >
-    A list with 10 bullet points of the most relevant information about {topic}
-  agent: researcher
+    A JSON list containing detailed information for each Jira ticket with fields: id, summary, description, status, and comments.
+  agent: jira_specialist
 
-reporting_task:
+review_jira_impact_task:
   description: >
-    Review the context you got and expand each topic into a full section for a report.
-    Make sure the report is detailed and contains any and all relevant information.
+    Review the Jira ticket information provided by the previous task and assess its impact on RBI.
+    Analyze the technical and business implications of each ticket.
   expected_output: >
-    A fully fledged report with the main topics, each with a full section of information.
-    Formatted as markdown without '```'
-  agent: reporting_analyst
+    A detailed analysis report in MARKDOWN format with:
+    - Affected components of RBI
+    - Current code references if applicable
+    - Highlighted risks, dependencies, or required actions
+    - Recommendations for implementation
+  agent: reviewer_agent
