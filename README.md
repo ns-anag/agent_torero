@@ -20,7 +20,7 @@ crewai install
 ```
 ### Customizing
 
-**Add your `OPENAI_API_KEY` into the `.env` file**
+**Copy `.env.example` as `.env` and update values in  `.env` file**
 
 - Modify `src/agent_torero/config/agents.yaml` to define your agents
 - Modify `src/agent_torero/config/tasks.yaml` to define your tasks
@@ -43,12 +43,8 @@ This example, unmodified, will run the create a `report.md` file with the output
 
 The agent_torero Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
 
-## Support
+## Details
 
-For support, questions, or feedback regarding the AgentTorero Crew or crewAI.
-- Visit our [documentation](https://docs.crewai.com)
-- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
-- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
-- [Chat with our docs](https://chatg.pt/DWjSBZn)
-
-Let's create wonders together with the power and simplicity of crewAI.
+1.  RBI provider code base is cleand and added to knowledge/rbi_provider_linux.txt
+2.  A csv format test cases from RBI Provider suite is cleaned up, adding SearchKeywords using gemini AI.
+3.  created all_keywords.txt using set of SearchKeywords

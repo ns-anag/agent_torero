@@ -8,12 +8,15 @@ retrieving configuration values in various types.
 
 import os
 import sys
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 import dotenv
 
 # Load environment variables
 dotenv.load_dotenv()
+
+ROOT_DIR = Path(__file__).parent.parent.parent.absolute()
 
 # Required environment variables
 REQUIRED_VARS = {
@@ -30,6 +33,9 @@ OPTIONAL_VARS = {
     "LOG_LEVEL": "INFO",
     "MAX_DIFF_SIZE": "50000",
     "SAVE_JIRA_DEBUG": "false",
+    "CREW_MEMORY_LIMIT": "32000",  # Limit memory payload size
+    "CREW_VERBOSE": "true",  # Enable verbose output
+    "AGENT_TORERO_ROOT_DIR": str(ROOT_DIR),
 }
 
 # Validate and collect environment variables
@@ -100,7 +106,8 @@ def get_int_config(key: str, default: int = 0) -> int:
 
     Args:
         key (str): The configuration key to retrieve.
-        default (int, optional): The default integer value if key is not found or conversion fails. Defaults to 0.
+        default (int, optional): The default integer value if key is not found or conversion fails.
+                Defaults to 0.
 
     Returns:
         int: The integer configuration value.

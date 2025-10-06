@@ -114,3 +114,22 @@ class JIRAHandler:
             results.append(result)
 
         return results
+
+    def add_comment_to_ticket(self, comment: str) -> bool:
+        """
+        Add a comment to a JIRA ticket.
+
+        Args:
+            comment(required): The comment text to add to the ticket.
+        Returns:
+            bool: True if the comment was added successfully, False otherwise.
+
+        """
+        ticket_id = "RBI-38719"  # Example ticket ID; replace with actual logic as needed
+
+        try:
+            self.jira.issue_add_comment(ticket_id, comment)
+            return True
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            print(f"Failed to add comment to {ticket_id}: {str(e)}")
+            return False

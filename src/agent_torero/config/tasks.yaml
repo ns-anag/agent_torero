@@ -1,20 +1,214 @@
 ---
+github_pull_request_details_task:
+  description: >
+    Use the GitHub API tool to fetch details of the specified pull request: {pull_number} 
+    and {repo_name} including the PR details like title, description and the diff of 
+    changes made.
+  expected_output: >
+    A JSON object that includes the pull request 'title' and 'body', and a 'diff_summary'
+    which is a list of objects. Each object in the list should represent a single changed
+    file and contain the file_name, the type of change (e.g., modified, added, deleted),
+    and a concise, one-sentence summary of the technicelal change made to that file.
+    **You MUST NOT include the full, raw diff in your final output.**
+
+    Example:
+    {
+      "details": {
+        "title": "RBI-38714: Mitigate high start times...",
+        "body": "Mitigation fixes to avoid high start times..."
+      },
+      "diff_summary": [
+        {
+          "file_name": "scripts/publish/config/provider.json",
+          "change_type": "modified",
+          "summary": "Reduced 'storage_subdomain' quantity from 3 to 0 to disable the 
+                      cookie substorage feature."
+        },
+        {
+          "file_name": "src/provider/client-webapp/slc-client-webapp/src/client/storage/
+                        rlocalstorage.js",
+          "change_type": "modified",
+          "summary": "Introduced a promise chain to serialize 'getData' calls, preventing 
+                      race conditions during cookie retrieval."
+        }
+      ]
+    }
+  agent: github_specialist
+
 jira_tickets_info_task:
   description: >
-    Use the JIRA Ticket Fetcher tool to fetch and summarize details for the given Jira ticket IDs: {ticket_ids}.
-    For each ticket, include the summary, description, status, and recent comments.
+    Based on the GitHub PR context, identify any JIRA ticket IDs mentioned.
+    Extract ticket IDs and use your tool to fetch detailed information for each ticket.
+    Look for patterns like RBI-1234, PROJ-567, etc.
+    Once identified, retrieve and summarize the key details of each ticket, including 
+    its summary, description, status, and any recent comments.
+    **DO NOT USE** the tool output directly; instead, synthesize the information into 
+    a clear summary.
+    If no JIRA tickets are identified, respond with "No JIRA tickets were found to analyze".
   expected_output: >
-    A JSON list containing detailed information for each Jira ticket with fields: id, summary, description, status, and comments.
+    A JSON object containing summarized JIRA ticket details.
+    Example:
+    {
+      "tickets": ["RBI-38714"],
+      "summary": {
+        "RBI-38714": "The issue is related to high start times on pages with cookie 
+                      transport enabled."
+      },
+      "description": {
+        "RBI-38714": "This ticket addresses the problem of high times to first images 
+                      when a domain escape happens..."
+      },
+      "status": { "RBI-38714": "Closed" },
+      "comments": { "RBI-38714": ["AFIK Back waits and requests cookies...", 
+                                  "The fix was verified..."] }
+    }
   agent: jira_specialist
+  context:
+    - github_pull_request_details_task
 
-review_jira_impact_task:
+knowledge_retrieval_task:
   description: >
-    Review the Jira ticket information provided by the previous task and assess its impact on RBI.
-    Analyze the technical and business implications of each ticket.
+    Analyze the pull request summary and Jira ticket context to find relevant 
+    information in your knowledge base.
+    You will receive a structured summary of code changes (file by file) and details 
+    of related Jira tickets.
+
+    Your first step is to synthesize this information to create a set of precise, technical search queries.
+    Your second step is to use these queries to search your knowledge base (the rbi-provider-linux codebase).
   expected_output: >
-    A detailed analysis report in MARKDOWN format with:
-    - Affected components of RBI
-    - Current code references if applicable
-    - Highlighted risks, dependencies, or required actions
-    - Recommendations for implementation
+    A concise summary of the most relevant existing code context that relates to the PR changes.
+    The output should be a JSON list of objects, where each object contains the retrieved context
+    and an explanation of its relevance.
+    **You MUST NOT output full file content.**
+
+    Example:
+    [
+      {
+        "retrieved_context": "function RLocalStorage() { ... var _substorages = []; ... function getData(query) { ... } ... }",
+        "relevance_explanation": "This context shows the existing structure of the RLocalStorage class in rlocalstorage.js. The PR modifies the 'getData' function within this class to serialize promise handling."
+      }
+    ]
+  agent: knowledge_retrieval_specialist
+  context:
+    - github_pull_request_details_task
+    - jira_tickets_info_task
+
+test_cases_retrieval_task:
+  description: >
+    Your task is to identify relevant test cases.
+    Execute the following steps one by one:
+
+    **Step 1: Discover Available Keywords.**
+    First, call the 'Test Case Search Tool' with NO arguments. This will return a list of all
+    available keywords in the test case database.
+    **NOTE**: If you are unable to retrieve the initial list of all keywords,
+    you should report this failure and proceed by proposing new test cases based on the context.
+
+    **Step 2: Select and Filter.**
+    Next, analyze the context from the PR summary and Jira tickets. From the full list of
+    keywords you just retrieved, select the ones that are most relevant to the changes.
+    **Choose only from that list of available keywords**,
+    
+    **Step 3: Retrieve test cases.**
+    Finally, call the 'Test Case Search Tool' **AGAIN**, this time providing the list
+    of selected keywords to retrieve the full details of the matching test cases.
+
+    **Step 4: Review and Propose New Test Cases.**
+    Review the retrieved test cases to ensure they adequately cover the changes.
+    If you find gaps in coverage, propose new test cases that should be created to cover
+    the changes, marking their type as 'New'.
+
+    Your final output should be a list of test cases (retrieved from Step 3: Retrieve test cases
+    and combined with any new ones you propose in Step 4: Review and Propose New Test Cases),
+    each with its ID, title, and a brief summary.
+    If no relevant test cases are found, respond with "No relevant test cases were found to analyze".
+  expected_output: >
+    A string containing:
+    ID: <ID>, Title: <Title>, Summary: <Summary>
+
+    Example:
+    **Existing**
+    ID: C1234, Title: Verify Cookie Substorage Disabled, Summary: Verify Cookie Substorage is disabled.
+    ID: C5678, Title: Test Serialized getData Calls, Summary: Verifies the serialization of getData calls.
+    **Proposed New**
+    ID: New, Title: Edge Case for Concurrent getData Calls, Summary: Test handling of concurrent getData calls to ensure proper serialization.
+
+    or
+    No relevant test cases were found to analyze.
+
+  agent: test_cases_retrieval_specialist
+  context:
+    - github_pull_request_details_task
+    - jira_tickets_info_task
+    - knowledge_retrieval_task
+
+review_and_synthesis_task:
+  description: >
+    Synthesize the information from all previous tasks (GitHub PR summary, Jira details, codebase context, and test cases)
+    to provide a final, comprehensive review for PR {pull_number} in repo {repo_name}.
+    **You MUST NOT simply copy or repeat the content from the previous steps.**
+    Your final report should integrate insights from all sources into a single, cohesive report.
+  expected_output: >
+    A single, cohesive, and detailed analysis report in MARKDOWN format.
+    You MUST adhere strictly to the following markdown template. Populate each section
+    with your synthesized analysis. The 'Testing Recommendations' section is mandatory.
+
+    ---
+
+    # 🎯 Agent Torero: Comprehensive Review for PR {pull_number} in {repo_name}
+
+    > **Agent Disclaimer**: Agent Torero is designed to provide helpful code analysis
+    > and recommendations, but may make mistakes. Please use this review as guidance
+    > and always apply human judgment and additional validation.
+
+    ## Release Notes
+    - [Your concise release note here]
+
+    ## Executive Summary
+    [Your summary of the changes, incorporating context from the code and Jira tickets.]
+
+    ## Objective
+    [The main objectives based on the linked JIRA tickets.]
+
+    ## Pull Request Objectives
+    [A summary of the PR's stated objectives.]
+
+    ## Pull Request Diversions
+    [Note any deviations from the original objectives found during analysis.]
+
+    ## Knowledge Retrieval Insights
+    [Provide key insights from the existing codebase that are relevant to this change.]
+
+    ## Risk Assessment
+    **Risk:** [Choose one: High, Medium, Low]
+    **Justification:** [Your justification for the risk rating, based on the change's complexity and impact.]
+
+    ## Areas of Concern
+    1.  [Specific point of concern 1]
+    2.  [Specific point of concern 2]
+
+    ## Testing Recommendations
+    [Put the output of the 'test_cases_retrieval_task' here.]
+
+    ## Other Recommendations
+    - [Any other items for the QE team or developers to cover, such as documentation updates.]
   agent: reviewer_agent
+  output_file: report.md
+  context:
+    - jira_tickets_info_task
+    - github_pull_request_details_task
+    - knowledge_retrieval_task
+    - test_cases_retrieval_task
+
+jira_add_comment_task:
+  description: >
+    Using the markdown formatted review from the 'review_and_synthesis_task',
+    and the ticket list from the 'jira_tickets_info_task', add the full review
+    as a comment to each JIRA ticket that was analyzed.
+  expected_output: >
+    A confirmation statement listing the JIRA ticket IDs to which the review comment was successfully posted.
+    Example: "Successfully posted the review to the following JIRA tickets: RBI-1234, RBI-5678."
+  agent: jira_updater_agent
+  context:
+    - review_and_synthesis_task
+    - jira_tickets_info_task

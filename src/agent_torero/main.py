@@ -17,14 +17,12 @@ def run():
     """
     Run the crew.
     """
-    inputs = {
-        "ticket_ids": ["RBI-39226", "RBI-39223"],
-    }
+    inputs = {"pull_number": 7741, "repo_name": "rbi-provider-linux"}
 
     try:
         AgentTorero().crew().kickoff(inputs=inputs)
     except Exception as e:
-        raise Exception(f"An error occurred while running the crew: {e}")
+        raise RuntimeError(f"An error occurred while running the crew: {e}") from e
 
 
 def train():
@@ -38,7 +36,7 @@ def train():
         )
 
     except Exception as e:
-        raise Exception(f"An error occurred while training the crew: {e}")
+        raise RuntimeError(f"An error occurred while training the crew: {e}") from e
 
 
 def replay():
@@ -49,7 +47,7 @@ def replay():
         AgentTorero().crew().replay(task_id=sys.argv[1])
 
     except Exception as e:
-        raise Exception(f"An error occurred while replaying the crew: {e}")
+        raise RuntimeError(f"An error occurred while replaying the crew: {e}") from e
 
 
 def test():
@@ -64,4 +62,4 @@ def test():
         )
 
     except Exception as e:
-        raise Exception(f"An error occurred while testing the crew: {e}")
+        raise RuntimeError(f"An error occurred while testing the crew: {e}") from e
