@@ -33,6 +33,7 @@ class GeminiProLLM:
                 reasoning_effort="high",
                 temperature=0.0,  # Lower temperature for more consistent results.
                 # stream=True,
+                max_retries=6,
             )
         return cls.gemini_pro_llm
 
@@ -58,5 +59,6 @@ class GeminiFlashLLM:
                 reasoning_effort="medium",
                 temperature=0.0,  # Lower temperature for more consistent results.
                 # stream=True,
+                max_retries=6,
             )
         return cls.gemini_flash_llm

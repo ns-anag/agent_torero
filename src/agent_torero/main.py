@@ -17,7 +17,7 @@ def run():
     """
     Run the crew.
     """
-    inputs = {"pull_number": 7741, "repo_name": "rbi-provider-linux"}
+    inputs = {"pull_number": 7858, "repo_name": "rbi-provider-linux"}
 
     try:
         AgentTorero().crew().kickoff(inputs=inputs)
