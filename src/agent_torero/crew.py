@@ -100,7 +100,7 @@ class AgentTorero:
         return Agent(
             config=self.agents_config["jira_updater_agent"],  # type: ignore[index]
             verbose=True,
-            reasoning=True,
+            reasoning=False,
             inject_date=True,
             llm=GeminiFlashLLM(),
         )

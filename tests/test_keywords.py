@@ -9,7 +9,8 @@ import pytest
 
 # Add the src directory to the Python path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-from agent_torero.config import get_config
+from src.agent_torero.config import get_config
+
 # pylint: disable=wrong-import-position
 from agent_torero.handlers.keywords import SearchTestCases
 
@@ -29,6 +30,8 @@ def test_get_all_keywords(search_test_cases):
     """
     print("AGENT_TORERO_ROOT_DIR:", get_config("AGENT_TORERO_ROOT_DIR"))
     keywords = search_test_cases.get_all_keywords()
+    print(keywords)
+    assert len(keywords) > 0
     assert isinstance(keywords, list)
     assert all(isinstance(kw, str) for kw in keywords)
 
@@ -40,6 +43,8 @@ def test_filter_by_keywords(search_test_cases):
     """
     keywords = ["3rd Party Auth Flow", "push_mode"]
     results = search_test_cases.filter_by_keywords(keywords)
+    print(results)
+    assert len(results) > 0
     assert isinstance(results, list)
     assert all(isinstance(item, dict) for item in results)
 

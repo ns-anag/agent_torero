@@ -25,7 +25,9 @@ class SearchTestCases:
         csv_path = root_dir / "knowledge" / "test_cases.csv"
         self.all_keywords_file_path = root_dir / "knowledge" / "all_keywords.txt"
         if not csv_path.exists():
-            raise FileNotFoundError(f"The test cases CSV file was not found at: {csv_path}")
+            raise FileNotFoundError(
+                f"The test cases CSV file was not found at: {csv_path}"
+            )
 
         self._df = pd.read_csv(csv_path, sep=";", dtype=str)
         # Ensure 'SearchKeywords' column exists and handle potential NaN values

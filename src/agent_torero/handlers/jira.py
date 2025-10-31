@@ -73,7 +73,11 @@ class JIRAHandler:
 
             # Extracting relevant fields - issue is already a dict with 'fields' key
             fields = issue.get("fields", {}) if isinstance(issue, dict) else {}
-            status = fields.get("status", {}) if isinstance(fields.get("status"), dict) else {}
+            status = (
+                fields.get("status", {})
+                if isinstance(fields.get("status"), dict)
+                else {}
+            )
 
             # Handle comments safely
             safe_comments = comments if comments is not None else {}
@@ -125,7 +129,9 @@ class JIRAHandler:
             bool: True if the comment was added successfully, False otherwise.
 
         """
-        ticket_id = "RBI-38719"  # Example ticket ID; replace with actual logic as needed
+        ticket_id = (
+            "RBI-38719"  # Example ticket ID; replace with actual logic as needed
+        )
 
         try:
             self.jira.issue_add_comment(ticket_id, comment)
