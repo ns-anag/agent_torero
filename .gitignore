@@ -335,3 +335,5 @@ Thumbs.db
 
 # Custom project files
 # Add any project-specific files or directories here
+crew_ai_*.txt
+report.md
